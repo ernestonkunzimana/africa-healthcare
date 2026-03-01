@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Africa Healthcare Nexus</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <h1>Africa Healthcare Nexus • Dynamic, Explainable, Sovereign</h1>
+      <p class="subtitle">Fail-safe online/offline operation, consent-aware workflows, and strict data residency controls.</p>
+
+      <section class="holo-card" data-panel="privacy">
+        <h2>Session</h2>
+        <button id="authBtn">Authenticate Clinician</button>
+        <button id="privacyBtn">Load Privacy Policy</button>
+        <p id="status" class="status">Status: Idle</p>
+        <p>Offline queue: <strong id="queueCount">0</strong></p>
+      </section>
+
+      <section class="holo-card">
+        <h2>Choose Your Dashboard Widgets</h2>
+        <div id="widgets" class="widgets"></div>
+      </section>
+
+      <div class="grid">
+        <section class="holo-card" data-panel="consent">
+          <h2>Consent Manager</h2>
+          <label>Patient ID <input id="patientId" value="P-001" /></label>
+          <label><input type="checkbox" id="consentData" checked /> Allow data processing</label>
+          <label><input type="checkbox" id="consentAi" checked /> Allow AI assistance</label>
+          <label><input type="checkbox" id="consentEmergency" /> Emergency override</label>
+          <button id="consentBtn">Save Consent</button>
+        </section>
+
+        <section class="holo-card" data-panel="triage">
+          <h2>Triage Panel</h2>
+          <label>Country <input id="country" value="Rwanda" /></label>
+          <label>Symptoms (comma-separated) <input id="symptoms" value="headache,fatigue" /></label>
+          <label>Notes <textarea id="notes">No red flags</textarea></label>
+          <div class="vitals">
+            <label>HR <input id="hr" type="number" value="89" /></label>
+            <label>SpO2 <input id="spo2" type="number" value="97" /></label>
+            <label>SBP <input id="sbp" type="number" value="122" /></label>
+            <label>DBP <input id="dbp" type="number" value="79" /></label>
+          </div>
+          <button id="triageBtn">Run Triage</button>
+        </section>
+
+        <section class="holo-card" data-panel="explainability">
+          <h2>Explainability & Output</h2>
+          <pre id="output">No recommendation yet.</pre>
+        </section>
+      </div>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>
