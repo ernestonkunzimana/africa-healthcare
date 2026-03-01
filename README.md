@@ -59,3 +59,10 @@ cd frontend && npm install && npm run build
 - In-country data control policies.
 - Explainable AI-assisted triage.
 - Human-in-the-loop and safety guardrails.
+
+
+## Unified Combined Release
+
+This repository now includes a **combined unified baseline** across all prior iterations.  
+See [RELEASE_NOTES_COMBINED.md](RELEASE_NOTES_COMBINED.md) for consolidated capabilities and sync target metadata.
+
