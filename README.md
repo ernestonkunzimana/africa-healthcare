@@ -4,8 +4,8 @@ End-to-end secure-by-design healthcare platform foundation with AI-aligned triag
 
 ## Repository Structure
 
-- `frontend/` — React web app command center for clinician workflows.
-- `backend/` — FastAPI API with authentication, triage, and AI safety guardrails.
+- `frontend/` — Web app command center for clinician workflows (static SPA).
+- `backend/` — Python API service with authentication, triage, and AI safety guardrails.
 - `infra/` — Docker Compose and Kubernetes manifests.
 - `docs/` — architecture, API contracts, security model, AI safety, and roadmap.
 
@@ -17,7 +17,7 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python -m app.main
 ```
 
 ### 2) Frontend
@@ -27,7 +27,7 @@ npm install
 npm run dev
 ```
 
-Frontend default API target is `http://localhost:8000`.
+Frontend default API target is `http://localhost:8000` and can be overridden with `window.AH_API_BASE`.
 
 ## Full Stack via Docker
 

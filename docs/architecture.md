@@ -4,8 +4,8 @@
 
 The platform is designed as a secure-by-design healthcare mesh:
 
-- **frontend/**: React-based clinician command center with cognitive-emulation UX and transparent AI confidence signals.
-- **backend/**: FastAPI service for auth, triage, policy guardrails, and future integration with EHR/telemedicine/VR modules.
+- **frontend/**: Web command center (static SPA style) with cognitive-emulation UX and transparent AI confidence signals.
+- **backend/**: Python API service for auth, triage, policy guardrails, and future integration with EHR/telemedicine/VR modules.
 - **infra/**: Docker + Kubernetes deployment assets for local and cloud runtime.
 - **docs/**: Living technical and governance documentation.
 

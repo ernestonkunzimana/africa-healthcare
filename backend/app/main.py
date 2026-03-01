@@ -1,58 +1,66 @@
-from fastapi import Depends, FastAPI, HTTPException, Security
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+from __future__ import annotations
+
+import json
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from .ai_service import generate_triage_recommendation
-from .config import settings
-from .models import TokenResponse, TriageRequest, TriageResponse, UserAuthRequest
-from .security import authenticate_user, create_access_token
-
-app = FastAPI(title=settings.app_name, version=settings.api_version)
-security_scheme = HTTPBearer()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Authorization", "Content-Type"],
-)
+from .models import parse_triage_request
+from .security import authenticate_user, create_access_token, verify_access_token
 
 
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Security(security_scheme),
-) -> dict:
-    token = credentials.credentials
-    try:
-        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
-        username: str | None = payload.get("sub")
-        role: str | None = payload.get("role")
-        if username is None or role is None:
-            raise HTTPException(status_code=401, detail="Invalid authentication token")
-        return {"username": username, "role": role}
-    except JWTError as exc:
-        raise HTTPException(status_code=401, detail="Token verification failed") from exc
+def _json(status: int, payload: dict) -> tuple[int, bytes]:
+    return status, json.dumps(payload).encode()
 
 
-@app.get("/health")
-def health() -> dict:
-    return {"status": "ok", "service": settings.app_name}
+def handle_request(method: str, path: str, headers: dict, body: bytes) -> tuple[int, bytes]:
+    if method == "GET" and path == "/health":
+        return _json(200, {"status": "ok", "service": "Africa Healthcare Platform"})
+
+    if method == "POST" and path == "/auth/token":
+        data = json.loads(body or b"{}")
+        user = authenticate_user(data.get("username", ""), data.get("password", ""))
+        if not user:
+            return _json(401, {"detail": "Invalid credentials"})
+        token = create_access_token(user["username"], user["role"])
+        return _json(200, {"access_token": token, "token_type": "bearer"})
+
+    if method == "POST" and path == "/api/triage":
+        auth = headers.get("authorization", "")
+        if not auth.startswith("Bearer "):
+            return _json(401, {"detail": "Missing bearer token"})
+        try:
+            verify_access_token(auth.split(" ", 1)[1])
+            req = parse_triage_request(json.loads(body or b"{}"))
+        except ValueError as exc:
+            return _json(400, {"detail": str(exc)})
+        return _json(200, generate_triage_recommendation(req))
+
+    return _json(404, {"detail": "Not found"})
 
 
-@app.post("/auth/token", response_model=TokenResponse)
-def login(payload: UserAuthRequest) -> TokenResponse:
-    user = authenticate_user(payload.username, payload.password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+class Handler(BaseHTTPRequestHandler):
+    def _read_body(self) -> bytes:
+        length = int(self.headers.get("Content-Length", "0"))
+        return self.rfile.read(length) if length else b""
 
-    token = create_access_token(subject=user["username"], role=user["role"])
-    return TokenResponse(access_token=token)
+    def do_GET(self) -> None:  # noqa: N802
+        status, payload = handle_request("GET", self.path, {k.lower(): v for k, v in self.headers.items()}, b"")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def do_POST(self) -> None:  # noqa: N802
+        status, payload = handle_request("POST", self.path, {k.lower(): v for k, v in self.headers.items()}, self._read_body())
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(payload)
 
 
-@app.post("/api/triage", response_model=TriageResponse)
-def triage(
-    request: TriageRequest,
-    _: dict = Depends(get_current_user),
-) -> TriageResponse:
-    return generate_triage_recommendation(request)
+def run_server(host: str = "0.0.0.0", port: int = 8000) -> None:
+    ThreadingHTTPServer((host, port), Handler).serve_forever()
+
+
+if __name__ == "__main__":
+    run_server()
